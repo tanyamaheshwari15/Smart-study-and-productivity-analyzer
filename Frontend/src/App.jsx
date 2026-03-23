@@ -1,9 +1,10 @@
+import {Signup} from './pages/signup'
 
 function App() {
 
   return (
     <>
-      <h1>Smart Study Analyzer</h1>
+      <Signup />
     </>
   )
 }
