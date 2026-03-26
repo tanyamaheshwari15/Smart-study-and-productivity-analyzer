@@ -4,6 +4,7 @@ import TopNavbar from "./components/TopNavbar";
 import Login from "./pages/login";
 import Signup from "./pages/signup";
 import Dashboard from "./pages/dashboard";
+import StudyTimer from "./components/study-timer";
 
 function App() {
   const location = useLocation();
@@ -20,7 +21,8 @@ function App() {
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/dashboard" element={<Dashboard/>} />
+          <Route path="/study-timer" element={<StudyTimer/>} />
         </Routes>
       </div>
     </>
