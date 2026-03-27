@@ -4,7 +4,10 @@ import TopNavbar from "./components/TopNavbar";
 import Login from "./pages/login";
 import Signup from "./pages/signup";
 import Dashboard from "./pages/dashboard";
-import StudyTimer from "./components/study-timer";
+import StudyTimer from "./pages/study-timer";
+import ActivityLog from "./pages/activity-log";
+import Insights from "./pages/insights";
+import Goals from "./pages/Goal";
 
 function App() {
   const location = useLocation();
@@ -23,6 +26,9 @@ function App() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/dashboard" element={<Dashboard/>} />
           <Route path="/study-timer" element={<StudyTimer/>} />
+          <Route path="/activity-log" element={<ActivityLog/>} />
+          <Route path="/ai-insights" element={<Insights/>} />
+          <Route path="/goal" element={<Goals/>} />
         </Routes>
       </div>
     </>
