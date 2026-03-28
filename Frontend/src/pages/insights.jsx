@@ -1,19 +1,55 @@
 import Card from "../components/Card";
+
 export default function Insights() {
-    return (
-        <>
-        <div className="container d-flex flex-column gap-4 mt-4" style={{position:"relative",top:59}}>
-        <h2>AI Insights</h2>
-        <div className="d-flex gap-4 flex-wrap justify-content-center">
-        <Card width="600px" height="200px" title="Card 1" content="This is the content for the first card." />
-        <Card width="320px" height="200px" title="Card 2" content="This is the content for the second card." />
-        <Card width="320px" height="200px" title="Card 2" content="This is the content for the second card." />
-        <Card width="600px" height="200px" title="Card 2" content="This is the content for the second card." />
-        <Card width="320px" height="200px" title="Card 2" content="This is the content for the second card." />
-        <Card width="320px" height="200px" title="Card 2" content="This is the content for the second card." />
-        <Card width="1290px" height="100px" title="Card 2" content="This is the content for the second card." />
+  return (
+    <div
+      className="container mt-4"
+      style={{ position: "relative", top: 59 }}
+    >
+      <h2 className="mb-4">AI Insights</h2>
+
+      <div className="row g-4 justify-content-center">
+
+        {/* LEFT SIDE */}
+        <div className="col-lg-6 d-flex flex-column gap-4">
+          <Card
+            height="260px"
+            title="WEEKLY EFFICIENCY & PREDICTED PRODUCTIVITY"
+          />
+          <Card
+            height="260px"
+            title="STUDY EFFICIENCY HEATMAP"
+          />
         </div>
+
+        {/* RIGHT SIDE */}
+        <div className="col-lg-6 d-flex flex-column gap-4">
+
+          {/* 4 small cards */}
+          <div className="row g-4">
+            <div className="col-6">
+              <Card height="150px" title="PEAK PRODUCTIVITY HOURS" />
+            </div>
+            <div className="col-6">
+              <Card height="150px" title="DSA PROGRESS INSIGHTS" />
+            </div>
+            <div className="col-6">
+              <Card height="150px" title="RECOMMENDED WEAK TOPIC REVIEW" />
+            </div>
+            <div className="col-6">
+              <Card height="150px" title="PERSONALIZED HABIT TIP" />
+            </div>
+          </div>
+
+          {/* THIS is the key fix 🔥 */}
+          <Card
+            height="150px"
+            title="AUTOMATED PROGRESS REPORT"
+          />
+
         </div>
-        </>
-    )
+
+      </div>
+    </div>
+  );
 }

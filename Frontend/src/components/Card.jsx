@@ -4,7 +4,7 @@ export default function Card({ title, content, width, height }) {
       className="card shadow p-4 rounded-4"
       style={{ width: width, height: height }}
     >
-      <h5>{title}</h5>
+      <h6><b>{title}</b></h6>
       <div>{content}</div>
     </div>
   );
