@@ -17,14 +17,40 @@ const activeSession = {
   isRunning: true,
   time: "00:45:12"
 };
-const activityHeatmap = [
-  { day: "Mon", value: 2 },
-  { day: "Tue", value: 4 },
-  { day: "Wed", value: 3 },
-  { day: "Thu", value: 5 },
-  { day: "Fri", value: 1 },
-  { day: "Sat", value: 4 }
-];
+
+const generateHeatmap=()=>{
+const data = [];
+const start=new Date(2026,0,1);
+
+for(let i=0;i<365;i++){
+  const d=new Date(start);
+  d.setDate(start.getDate()+i);
+  data.push({
+    date: d.toISOString().split("T")[0],
+    value: Math.floor(Math.random()*6) // 0-5 hours
+  });
+}
+return data;
+}
+const activityHeatmap = generateHeatmap();
+
+const getWeek = (data) => {
+  const weeks=[];
+  let week=[];
+
+  data.forEach((day) => {
+    week.push(day);
+    if(week.length === 7){
+      weeks.push(week);
+      week=[];
+    }
+  });
+
+  if(week.length > 0) weeks.push(week);
+  return weeks;
+};
+
+const weeks = getWeek(activityHeatmap);
 
 const stats = {
   todayHours: 4.5,
@@ -40,6 +66,7 @@ const dashboardData = {
   dsaProgress,
   activeSession,
   activityHeatmap,
+  weeks,
   stats,
   insights
 };

@@ -10,6 +10,13 @@ const getColor = (topic) => {
 };
 
 // Heatmap
+const getColorHeatmap = (value) => {
+  if (value === 0) return "#2d2d2d";
+  if (value <= 1) return "#0e4429";
+  if (value <= 3) return "#006d32";
+  if (value <= 5) return "#26a641";
+  return "#39d353";
+};
 
 export default function Dashboard() {
     return (
@@ -56,38 +63,75 @@ export default function Dashboard() {
         }/>
 
         <Card width="800px" height="220px" title="Activity Tracking" content={
-            <>
-            <div className="row align-items-center g-3">
+    <div className="row align-items-center">
 
-              {/* LEFT → Heatmap */}
-              <div className="col-md-8 d-grid gap-1" style={{gridTemplateColumns:"repeat(7, 1fr)"}}>
-               
+      {/* LEFT → Heatmap */}
+      <div className="col-md-9">
+        <div className="d-flex">
+
+          {/* Day Labels */}
+          <div className="d-flex flex-column me-2 small text-secondary">
+            <small>Mon</small>
+            <small>Tue</small>
+            <small>Wed</small>
+            <small>Thu</small>
+            <small>Fri</small>
+            <small>Sat</small>
+            <small>Sun</small>
+          </div>
+
+          {/* Heatmap Scroll */}
+          <div className="d-flex overflow-auto">
+
+            {dashboardData.weeks.map((week, wIndex) => (
+              <div key={wIndex} className="d-flex flex-column">
+
+                {week.map((day, dIndex) => (
+                  <div
+                    key={dIndex}
+                    title={`${day.date} : ${day.value}`}
+                    style={{
+                      width: "15px",
+                      height: "15px",
+                      margin: "1px",
+                      backgroundColor: getColorHeatmap(day.value)
+                    }}>  
+                  </div>
+                ))}
+
               </div>
+            ))}
 
-              {/* RIGHT → Stats */}
-                <div className="p-3 border rounded-3 text-center col-md-4">
+          </div>
+        </div>
+      </div>
 
-                  <p className="text-secondary small mb-1">
-                    Daily/Weekly Stats
-                  </p>
+      {/* RIGHT → Stats */}
+      <div className="col-md-3">
+        <div className="p-2 border rounded-3 text-center">
 
-                  <h4 className="mb-1">
-                    {dashboardData.stats.todayHours} Hrs
-                  </h4>
+          <p className="text-secondary small mb-1">
+            Daily/Weekly Stats
+          </p>
 
-                  <p className="text-success mb-0">
-                    +{dashboardData.stats.yesterdayDiff} Hrs
-                  </p>
+          <h4 className="mb-1">
+            {dashboardData.stats.todayHours} Hrs
+          </h4>
 
-                  <small className="text-secondary">
-                    vs Yesterday
-                  </small>
+          <p className="text-success mb-0">
+            +{dashboardData.stats.yesterdayDiff} Hrs
+          </p>
 
-                </div>
-                </div>
-            </>
-          }
-        />
+          <small className="text-secondary">
+            vs Yesterday
+          </small>
+
+        </div>
+      </div>
+
+    </div>
+  }
+/>
 
         <Card width="460px" height="200px" title="AI Insights" content={
         <>
