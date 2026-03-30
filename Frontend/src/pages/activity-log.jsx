@@ -1,4 +1,5 @@
 import Card from "../components/Card";
+import activityLog from "../components/activity";
 export default function ActivityLog() {
   return (
     <>
@@ -56,15 +57,18 @@ export default function ActivityLog() {
                       <th scope="col">Outcome/Notes</th>
                     </tr>
                   </thead>
-                  <tbody>
-                    <tr>
-                      <th scope="row">1</th>
-                      <td>Mark</td>
-                      <td>Otto</td>
-                      <td>@mdo</td>
-                      <td>@mdo</td>
-                    </tr>
-                  </tbody>
+                  {activityLog.activity.map((entry, index) => {
+                    return (<tbody key={index}>
+                      <tr>
+                        <td scope="row">{entry.datetime}</td>
+                        <td>{entry.type}</td>
+                        <td>{entry.duration}</td>
+                        <td>{entry.description}</td>
+                        <td>{entry.notes}</td>
+                      </tr>
+                    </tbody>
+                    );
+                  })}
                 </table>
               </>
             }
