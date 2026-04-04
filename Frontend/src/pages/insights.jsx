@@ -28,7 +28,7 @@ export default function Insights() {
           {/* 4 small cards */}
           <div className="row g-4">
             <div className="col-6">
-              <Card height="150px" title="PEAK PRODUCTIVITY HOURS" />
+              <Card height="150px" title="PEAK PRODUCTIVITY HOURS" content="You are consistently most productive between 8:00 PM and 10:00 PM"/>
             </div>
             <div className="col-6">
               <Card height="150px" title="DSA PROGRESS INSIGHTS" />
