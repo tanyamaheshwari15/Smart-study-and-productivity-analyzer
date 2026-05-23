@@ -1,6 +1,6 @@
 // Temporary mock dashboard data for API development
 const studyDistractionData = [
-  { day: "Sun", study: 60, distraction: 10 },
+  { day: "Sun", study: 0, distraction: 10 },
   { day: "Mon", study: 25, distraction: 20 },
   { day: "Tue", study: 45, distraction: 20 },
   { day: "Wed", study: 20, distraction: 15 },

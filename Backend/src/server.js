@@ -12,14 +12,19 @@ dotenv.config();
 // Initialize Express app
 const app = express();
 
+
 // Middleware
 app.use(express.json());
-app.use(
-  cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
-    credentials: true,
-  })
-);
+
+// Allow the configured frontend origin in production, but permit any origin during
+// local development (useful when Vite picks a different port like 5174).
+const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+const corsOptions =
+  process.env.NODE_ENV === "production"
+    ? { origin: frontendUrl, credentials: true }
+    : { origin: true, credentials: true };
+
+app.use(cors(corsOptions));
 
 // Connect to MongoDB
 connectDB();
