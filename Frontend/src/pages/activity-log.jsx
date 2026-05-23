@@ -1,5 +1,5 @@
 import Card from "../components/Card";
-import activityLog from "../components/activity";
+import mockActivity from "../data/mockActivity";
 export default function ActivityLog() {
   return (
     <>
@@ -57,7 +57,7 @@ export default function ActivityLog() {
                       <th scope="col">Outcome/Notes</th>
                     </tr>
                   </thead>
-                  {activityLog.activity.map((entry, index) => {
+                  {mockActivity.activity.map((entry, index) => {
                     return (<tbody key={index}>
                       <tr>
                         <td scope="row">{entry.datetime}</td>
