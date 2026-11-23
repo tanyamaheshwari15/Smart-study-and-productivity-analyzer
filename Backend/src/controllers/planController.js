@@ -80,33 +80,60 @@ export const generatePlan = async (req, res, next) => {
 
     let sessions = null;
     let provider = "deterministic";
+    let model = null;
+    let generationStatus = "fallback";
+    let fallbackReason = "";
     let explanation = "Deterministic plan generated from subject priorities and availability because Gemini was unavailable or not configured.";
     const key = process.env.GEMINI_API_KEY;
-    if (process.env.AI_PROVIDER === "gemini" && key) {
+    if (process.env.AI_PROVIDER !== "gemini") {
+      fallbackReason = "AI_PROVIDER is not set to gemini.";
+    } else if (!key) {
+      fallbackReason = "GEMINI_API_KEY is not configured in the backend environment.";
+    } else {
+      model = process.env.GEMINI_MODEL || "gemini-3.8-flash";
       const prompt = `Generate a structured study timetable JSON only. Input: ${JSON.stringify({ ...input, subjects: subjects.map((s) => ({ id:String(s._id), name:s.name, difficulty:s.difficulty, priority:s.priority, examDate:s.examDate })) })}. Return keys title, explanation, sessions (array of subjectName,startAt ISO,durationMinutes,breakMinutes,objective). Respect start/end dates, availability, breaks, and deadlines. Do not overlap sessions.`;
       try {
-        const model = process.env.GEMINI_MODEL || "gemini-3.8-flash";
         const response = await axios.post(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`, {
           contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.2, responseMimeType: "application/json" },
         }, { timeout: 15000 });
+        model = response.data?.modelVersion || model;
         const text = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (text) {
-          const parsedResult = JSON.parse(text.replace(/^```json\s*/i, "").replace(/```$/i, ""));
-          sessions = validatePlanSessions(parsedResult.sessions, subjects, input);
-          provider = "gemini";
-          explanation = String(parsedResult.explanation || "Gemini-generated plan based on subject priorities, deadlines, and availability.").slice(0, 2000);
-        }
+        if (!text) throw new Error("Gemini returned an empty response.");
+        const parsedResult = JSON.parse(text.replace(/^```json\s*/i, "").replace(/```$/i, ""));
+        sessions = validatePlanSessions(parsedResult.sessions, subjects, input);
+        provider = "gemini";
+        generationStatus = "success";
+        fallbackReason = "";
+        explanation = String(parsedResult.explanation || "Gemini-generated plan based on subject priorities, deadlines, and availability.").slice(0, 2000);
       } catch (error) {
-        console.warn("Gemini plan unavailable:", error.response?.status || error.code || error.message);
+        const status = error.response?.status;
+        const providerMessage = error.response?.data?.error?.message;
+        const reason = status
+          ? `Gemini API returned HTTP ${status}${providerMessage ? `: ${providerMessage}` : "."}`
+          : error.code
+            ? `Gemini request failed with network error ${error.code}.`
+            : `Gemini response could not be used: ${error.message || "unknown response error"}`;
+        fallbackReason = reason.split(key).join("[redacted]").slice(0, 1000);
+        console.warn("Gemini plan generation fell back:", {
+          status: status || null,
+          code: error.code || null,
+          reason: fallbackReason,
+        });
       }
     }
 
-    if (!sessions) sessions = validatePlanSessions(deterministicPlan(subjects, input), subjects, input);
+    if (!sessions) {
+      sessions = validatePlanSessions(deterministicPlan(subjects, input), subjects, input);
+      if (!fallbackReason) fallbackReason = "Gemini did not produce a usable plan; deterministic scheduling was used.";
+      explanation = `Deterministic plan generated. ${fallbackReason}`;
+    }
+    const generatedAt = new Date();
     const plan = await StudyPlan.create({
       userId: req.user.userId,
       title: input.title || `Study plan ${new Date(input.startDate).toLocaleDateString()}`,
       status: "draft", provider, startDate: input.startDate, endDate: input.endDate,
-      sessions, inputSnapshot: input, explanation,
+      sessions, inputSnapshot: input, explanation, model, generationStatus,
+      generatedAt, fallbackReason: provider === "deterministic" ? fallbackReason : "",
     });
     res.status(201).json({ message: provider === "gemini" ? "Gemini study plan generated" : "Study plan generated using deterministic fallback", data: plan });
   } catch (error) { next(error); }

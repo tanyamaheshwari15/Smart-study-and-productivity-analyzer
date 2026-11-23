@@ -39,7 +39,8 @@ export default function ActivityLog() {
       <section className="product-surface overflow-hidden">
         <div className="d-flex align-items-center justify-content-between gap-3 flex-wrap p-3 p-lg-4 border-bottom">
           <div><h2 className="h6 fw-bold mb-1">Session history</h2><p className="small text-secondary mb-0">Filter by a subject to review your study activity.</p></div>
-          <select aria-label="Filter sessions by subject" className="form-select" value={filter} onChange={(event) => setFilter(event.target.value)} style={{ width: "auto", minWidth: 180 }}>
+          <label className="visually-hidden" htmlFor="activity-subject-filter">Filter sessions by subject</label>
+          <select id="activity-subject-filter" name="subjectFilter" className="form-select" value={filter} onChange={(event) => setFilter(event.target.value)} style={{ width: "auto", minWidth: 180 }}>
             <option>All</option>{Array.from(new Set(entries.map((entry) => entry.type))).map((type) => <option key={type}>{type}</option>)}
           </select>
         </div>
