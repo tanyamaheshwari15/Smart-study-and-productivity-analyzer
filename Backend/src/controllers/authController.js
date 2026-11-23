@@ -2,6 +2,8 @@ import User from "../models/User.js";
 import jwt from "jwt-simple";
 import bcrypt from "bcryptjs";
 
+const jwtSecret = process.env.JWT_SECRET || "local-dev-secret-key";
+
 // Register a new user
 export const register = async (req, res) => {
   try {
@@ -36,7 +38,7 @@ export const register = async (req, res) => {
     // Create JWT token
     const token = jwt.encode(
       { userId: user._id, email: user.email, username: user.username },
-      process.env.JWT_SECRET
+      jwtSecret
     );
 
     res.status(201).json({
@@ -76,7 +78,7 @@ export const login = async (req, res) => {
     // Create JWT token
     const token = jwt.encode(
       { userId: user._id, email: user.email, username: user.username },
-      process.env.JWT_SECRET
+      jwtSecret
     );
 
     res.status(200).json({

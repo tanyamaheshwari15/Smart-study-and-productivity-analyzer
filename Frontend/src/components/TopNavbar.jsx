@@ -1,16 +1,19 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
+import { clearSession, getStoredUser } from "../services/api";
+
 export default function TopNavbar() {
   const location = useLocation();
   const navigate = useNavigate();
 
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef();
+  const user = getStoredUser();
 
   const isAuthPage =
     location.pathname === "/" || location.pathname === "/signup";
 
-  const username = "Tanya";
+  const username = user?.username || "User";
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -23,6 +26,7 @@ export default function TopNavbar() {
   }, []);
 
   const handleLogout = () => {
+    clearSession();
     navigate("/");
   };
 
@@ -49,12 +53,11 @@ export default function TopNavbar() {
               style={{ cursor: "pointer" }}
               onClick={() => setOpen(!open)}
             >
-              {/* Avatar */}
               <div
                 className="rounded-circle bg-primary d-flex justify-content-center align-items-center"
                 style={{ width: "35px", height: "35px" }}
               >
-                {username[0]}
+                {username[0]?.toUpperCase() || "U"}
               </div>
 
               <span>{username}</span>
@@ -62,7 +65,6 @@ export default function TopNavbar() {
             </div>
           )}
 
-          {/* Dropdown */}
           <div
             className={`dropdown-menu dropdown-menu-end show mt-2 ${open && !isAuthPage ? "" : "d-none"}`}
           >

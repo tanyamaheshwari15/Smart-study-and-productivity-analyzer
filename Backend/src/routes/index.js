@@ -2,6 +2,8 @@ import express from "express";
 import authRoutes from "./authRoutes.js";
 import sampleRoutes from "./sampleRoutes.js";
 import dashboardRoutes from "./dashboardRoutes.js";
+import aiRoutes from "./aiRoutes.js";
+import dataRoutes from "./dataRoutes.js";
 
 const router = express.Router();
 
@@ -18,5 +20,9 @@ router.use("/sample", sampleRoutes);
 
 // Dashboard route
 router.use("/dashboard", dashboardRoutes);
+
+// AI insight route
+router.use("/ai", aiRoutes);
+router.use("/data", dataRoutes);
 
 export default router;

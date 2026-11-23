@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import SideNavbar from "./components/SideNavbar";
 import TopNavbar from "./components/TopNavbar";
 import Login from "./pages/login";
@@ -11,6 +11,11 @@ import Goals from "./pages/Goal";
 import Settings from "./pages/Settings";
 import Profile from "./pages/profile";
 import Leaderboard from "./pages/Leaderboard";
+
+const isAuthenticated = () => Boolean(localStorage.getItem("smartStudyToken"));
+
+const ProtectedRoute = ({ children }) =>
+  isAuthenticated() ? children : <Navigate to="/" replace />;
 
 function App() {
   const location = useLocation();
@@ -27,14 +32,14 @@ function App() {
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/dashboard" element={<Dashboard/>} />
-          <Route path="/study-timer" element={<StudyTimer/>} />
-          <Route path="/activity-log" element={<ActivityLog/>} />
-          <Route path="/ai-insights" element={<Insights/>} />
-          <Route path="/goal" element={<Goals/>} />
-          <Route path="/settings" element={<Settings/>} />
-          <Route path="/profile" element={<Profile/>} />
-          <Route path="/leaderboard" element={<Leaderboard/>} />
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/study-timer" element={<ProtectedRoute><StudyTimer /></ProtectedRoute>} />
+          <Route path="/activity-log" element={<ProtectedRoute><ActivityLog /></ProtectedRoute>} />
+          <Route path="/ai-insights" element={<ProtectedRoute><Insights /></ProtectedRoute>} />
+          <Route path="/goal" element={<ProtectedRoute><Goals /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
         </Routes>
       </div>
     </>

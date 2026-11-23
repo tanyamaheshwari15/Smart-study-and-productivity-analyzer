@@ -1,80 +1,86 @@
+﻿import { useEffect, useState } from "react";
 import Card from "../components/Card";
-import mockActivity from "../data/mockActivity";
+import { api } from "../services/api";
+
 export default function ActivityLog() {
+  const [entries, setEntries] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState("All");
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const response = await api.get("/dashboard");
+        setEntries(response.data.data.activityLog || []);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
+  }, []);
+
+  if (loading) {
+    return <div className="container mt-4" style={{ position: "relative", top: 59 }}><h2>Activity Log</h2><p>Loading activity log...</p></div>;
+  }
+
+  const filteredEntries = filter === "All" ? entries : entries.filter((e) => e.type === filter);
+
   return (
-    <>
-      <div
-        className="container d-flex flex-column gap-4 mt-4"
-        style={{ position: "relative", top: 59 }}
-      >
-        <h2>Detailed Activity Log</h2>
-        <div className="d-flex gap-4 flex-wrap justify-content-center">
-          <Card
-            width="1250px"
-            content={
-              <>
-                <div className="d-flex align-items-center justify-content-center gap-4 flex-wrap mb-3">
-
-                {/* Calendar */}
-                <div className="input-group w-25">
-                    <span className="input-group-text"><i className="bi bi-calendar"></i></span>
-                    <select className="form-select w-auto">
-                        <option>Mar 27 - Mar 31, 2026</option>
-                    </select>
-                </div>
-
-                {/* Activity Type */}
-                <div className="input-group w-auto">
-                    <span className="input-group-text">Activity Type</span>
-                    <select className="form-select w-25">
-                        <option>All</option>
-                        <option>Study</option>
-                        <option>Distraction</option>
-                        <option>LeetCode</option>
-                        <option>MERN</option>
-                    </select>
-                </div>
-
-                {/* Search with icon */}
-                <div className="input-group w-25">
-                    <span className="input-group-text">
-                    <i className="bi bi-search"></i>
-                    </span>
-                    <input type="search" className="form-control" placeholder="Search..." />
-                </div>
-
-                <button className="btn btn-success" type="submit"><i className="bi bi-patch-plus"></i></button>
-                <button className="btn btn-warning" type="submit"><i className="bi bi-pencil-square"></i></button>
-                <button className="btn btn-danger" type="submit"><i className="bi bi-trash"></i></button>
-                </div>
-                <table className="table table-striped">
-                  <thead>
-                    <tr>
-                      <th scope="col">Date/Time</th>
-                      <th scope="col">Activity Type</th>
-                      <th scope="col">Duration</th>
-                      <th scope="col">Description</th>
-                      <th scope="col">Outcome/Notes</th>
-                    </tr>
-                  </thead>
-                  {mockActivity.activity.map((entry, index) => {
-                    return (<tbody key={index}>
-                      <tr>
-                        <td scope="row">{entry.datetime}</td>
-                        <td>{entry.type}</td>
-                        <td>{entry.duration}</td>
-                        <td>{entry.description}</td>
-                        <td>{entry.notes}</td>
-                      </tr>
-                    </tbody>
-                    );
-                  })}
-                </table>
-              </>
-            }
-          />
-        </div>
+    <div className="container d-flex flex-column gap-4 mt-4" style={{ position: "relative", top: 59, paddingBottom: "40px" }}>
+      <div className="mb-2">
+        <h2 style={{ fontSize: "2rem", fontWeight: 700, color: "#2c3e50", marginBottom: "0.5rem" }}>Activity Log</h2>
+        <p style={{ color: "#7f8c8d", marginBottom: 0 }}>Review your detailed study sessions and productivity</p>
       </div>
-    </>
+      <div className="d-flex gap-4 flex-wrap justify-content-center">
+        <Card
+          width="100%"
+          icon="📊"
+          title="Study Sessions"
+          content={
+            <>
+              <div className="d-flex align-items-center justify-content-between gap-3 flex-wrap mb-3">
+                <select className="form-select w-auto" value={filter} onChange={(e) => setFilter(e.target.value)} style={{ maxWidth: "180px" }}>
+                  <option>All</option>
+                  {Array.from(new Set(entries.map((entry) => entry.type))).map((type) => (
+                    <option key={type}>{type}</option>
+                  ))}
+                </select>
+                <span style={{ color: "#7f8c8d", fontSize: "0.9rem" }}>{filteredEntries.length} session{filteredEntries.length !== 1 ? "s" : ""}</span>
+              </div>
+
+              {filteredEntries.length === 0 ? (
+                <p style={{ color: "#95a5a6", fontStyle: "italic", textAlign: "center", padding: "20px 0" }}>No sessions found</p>
+              ) : (
+                <div className="table-responsive">
+                  <table className="table table-hover mb-0" style={{ fontSize: "0.9rem" }}>
+                    <thead>
+                      <tr style={{ borderBottom: "2px solid #ecf0f1" }}>
+                        <th scope="col" style={{ color: "#2c3e50", fontWeight: 600 }}>Date & Time</th>
+                        <th scope="col" style={{ color: "#2c3e50", fontWeight: 600 }}>Topic</th>
+                        <th scope="col" style={{ color: "#2c3e50", fontWeight: 600 }}>Duration</th>
+                        <th scope="col" style={{ color: "#2c3e50", fontWeight: 600 }}>Focus Score & Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredEntries.map((entry) => (
+                        <tr key={entry._id || entry.datetime} style={{ borderBottom: "1px solid #ecf0f1" }}>
+                          <td style={{ color: "#555" }}>{new Date(entry.datetime).toLocaleString()}</td>
+                          <td><span style={{ background: "#e3f2fd", color: "#1976d2", padding: "4px 8px", borderRadius: "4px", fontWeight: 500 }}>{entry.type}</span></td>
+                          <td style={{ color: "#555" }}>{entry.duration} hrs</td>
+                          <td style={{ color: "#555", fontSize: "0.85rem" }}>{entry.notes}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
+          }
+        />
+      </div>
+    </div>
   );
 }

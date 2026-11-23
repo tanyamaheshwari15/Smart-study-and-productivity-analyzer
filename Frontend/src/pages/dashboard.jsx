@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import DashboardCharts from "../components/DashboardCharts";
 import StudyStats from "../components/StudyStats";
 import ActiveSessionCard from "../components/ActiveSessionCard";
+import { api } from "../services/api";
 
 export default function Dashboard() {
   const [dashboardData, setDashboardData] = useState(null);
@@ -12,7 +12,7 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/dashboard");
+        const response = await api.get("/dashboard");
         setDashboardData(response.data.data);
       } catch (err) {
         setError(
@@ -60,16 +60,13 @@ export default function Dashboard() {
       >
         <h2>Smart Dashboard</h2>
         <div className="d-flex gap-4 flex-wrap justify-content-center">
-          {/* Charts Section */}
           <DashboardCharts
             studyData={dashboardData.studyDistractionData}
             progressData={dashboardData.dsaProgress}
           />
 
-          {/* Active Session Card */}
           <ActiveSessionCard sessionTime={dashboardData.activeSession.time} />
 
-          {/* Activity Heatmap & AI Insights */}
           <StudyStats
             weeks={dashboardData.weeks}
             stats={dashboardData.stats}
