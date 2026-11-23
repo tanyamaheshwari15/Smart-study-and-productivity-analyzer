@@ -8,8 +8,11 @@ A full-stack MERN application for tracking study sessions, goals, focus, streaks
 - MongoDB study-session and goal CRUD
 - Real dashboard analytics from the signed-in user's sessions
 - Functional Pomodoro-style study timer
-- Gemini AI integration using real account data, with a real-data fallback when Gemini is unavailable
-- Adaptive topic review plan
+- Gemini AI integration using real account data, with a transparent deterministic fallback
+- AI study analysis history with evidence and 30-day period metadata
+- Subject management and subject-linked study sessions
+- Gemini/deterministic study-plan drafts, validation, acceptance, and saved scheduled activities
+- Missed/postponed/completed adaptive activity status changes
 - Activity log, profile, settings, leaderboard, and study insights
 
 ## Run locally
@@ -52,6 +55,19 @@ GEMINI_MODEL=gemini-3.8-flash
 ```
 
 The backend sends only MongoDB-derived study statistics for the authenticated user. If Gemini is not configured or fails, the application returns an adaptive plan calculated from real session and goal data.
+
+## Key API groups
+
+- `/api/auth/*` — registration, login, current user
+- `/api/dashboard` — user-specific calculated dashboard data
+- `/api/subjects/*` — subject CRUD
+- `/api/data/sessions/*` — session create/update/delete
+- `/api/data/goals/*` — goal CRUD
+- `/api/data/preferences` — persisted user preferences
+- `/api/ai/analyze` — generate and save a study analysis
+- `/api/ai/history` — revisit saved analyses
+- `/api/plans/*` — generate, review, accept, and retrieve plans
+- `/api/plans/activities/:id/status` — complete, postpone, or miss activities
 
 ## Production deployment
 

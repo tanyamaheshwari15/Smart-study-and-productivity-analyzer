@@ -11,6 +11,8 @@ import Goals from "./pages/Goal";
 import Settings from "./pages/Settings";
 import Profile from "./pages/profile";
 import Leaderboard from "./pages/Leaderboard";
+import Subjects from "./pages/Subjects";
+import Planner from "./pages/Planner";
 
 const isAuthenticated = () => Boolean(localStorage.getItem("smartStudyToken"));
 
@@ -28,7 +30,7 @@ function App() {
     <>
       <TopNavbar />
       {!hideNavbar && <SideNavbar />}
-      <div style={{ marginLeft: hideNavbar ? "0" : "200px" }}>
+      <div className={hideNavbar ? "app-main-auth" : "app-main"}>
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
@@ -40,6 +42,8 @@ function App() {
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
+          <Route path="/subjects" element={<ProtectedRoute><Subjects /></ProtectedRoute>} />
+          <Route path="/planner" element={<ProtectedRoute><Planner /></ProtectedRoute>} />
         </Routes>
       </div>
     </>

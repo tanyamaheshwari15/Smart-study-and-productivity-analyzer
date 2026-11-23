@@ -1,105 +1,66 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import Card from "../components/Card";
-import { fetchAIInsights } from "../services/api";
+import { api } from "../services/api";
 
 export default function Insights() {
-  const [insights, setInsights] = useState(null);
+  const [analysis, setAnalysis] = useState(null);
+  const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState("");
+
+  const loadHistory = async () => {
+    const response = await api.get("/ai/history");
+    setHistory(response.data.data || []);
+  };
 
   useEffect(() => {
-    const loadInsights = async () => {
-      try {
-        const data = await fetchAIInsights();
-        setInsights(data);
-      } catch (err) {
-        setError(err.response?.data?.message || "Unable to fetch AI insights.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadInsights();
+    Promise.all([api.get("/ai/history")]).then(([response]) => {
+      const saved = response.data.data || [];
+      setHistory(saved);
+      setAnalysis(saved[0] || null);
+    }).catch((err) => setError(err.response?.data?.message || "Unable to load analysis history.")).finally(() => setLoading(false));
   }, []);
 
-  if (loading) {
-    return <div className="container mt-4" style={{ position: "relative", top: 59 }}><h2>AI Insights</h2><p>Loading insights...</p></div>;
-  }
+  const analyze = async () => {
+    setGenerating(true); setError("");
+    try {
+      const response = await api.post("/ai/analyze");
+      setAnalysis(response.data.data);
+      await loadHistory();
+    } catch (err) { setError(err.response?.data?.message || "Unable to analyze study habits."); }
+    finally { setGenerating(false); }
+  };
 
-  if (error) {
-    return <div className="container mt-4" style={{ position: "relative", top: 59 }}><h2>AI Insights</h2><div className="alert alert-danger">{error}</div></div>;
-  }
+  if (loading) return <div className="container mt-4" style={{position:"relative",top:59}}><h2>AI Study Analysis</h2><p>Loading saved analyses...</p></div>;
 
-  return (
-    <div
-      className="container mt-4"
-      style={{ position: "relative", top: 59 }}
-    >
-      <h2 className="mb-4">AI Insights</h2>
-
-      <div className="row g-4 justify-content-center">
-        <div className="col-lg-6 d-flex flex-column gap-4">
-          <Card
-            height="260px"
-            title="WEEKLY EFFICIENCY & PREDICTED PRODUCTIVITY"
-            content={
-              <div>
-                <p className="mb-2"><strong>Summary:</strong> {insights?.summary}</p>
-                <p className="mb-2"><strong>Best study window:</strong> {insights?.bestTime}</p>
-                <p className="mb-0"><strong>Focus score:</strong> {insights?.focusScore}/100</p>
-              </div>
-            }
-          />
-          <Card
-            height="260px"
-            title="STUDY EFFICIENCY HEATMAP"
-            content={<p>Your progress is derived from actual study sessions saved in MongoDB for your account.</p>}
-          />
-        </div>
-
-        <div className="col-lg-6 d-flex flex-column gap-4">
-          <div className="row g-4">
-            <div className="col-6">
-              <Card height="150px" title="PEAK PRODUCTIVITY HOURS" content={`You are consistently most productive between ${insights?.bestTime || "8:00 PM and 10:00 PM"}`} />
-            </div>
-            <div className="col-6">
-              <Card height="150px" title="DSA PROGRESS INSIGHTS" content={insights?.recommendations?.[1] || "Keep drilling weak topics daily."} />
-            </div>
-            <div className="col-6">
-              <Card height="150px" title="RECOMMENDED WEAK TOPIC REVIEW" content={insights?.recommendations?.[2] || "Review the lowest-progress topic first."} />
-            </div>
-            <div className="col-6">
-              <Card height="150px" title="PERSONALIZED HABIT TIP" content={insights?.recommendations?.[0] || "Protect your deep-work window."} />
-            </div>
-          </div>
-
-          <Card
-            height="auto"
-            title="ADAPTIVE STUDY PLAN"
-            content={insights?.plan?.length ? (
-              <div className="d-flex flex-column gap-2">
-                {insights.plan.map((item, index) => (
-                  <div key={index}><strong>{item.day}: {item.topic}</strong><br/><small>{item.durationMinutes} minutes — {item.reason}</small></div>
-                ))}
-              </div>
-            ) : <p className="mb-0">Add study sessions to generate a personalized plan.</p>}
-          />
-          <Card
-            height="150px"
-            title="AUTOMATED PROGRESS REPORT"
-            content={
-              <div>
-                <p className="mb-1"><strong>Next action:</strong> {insights?.nextAction}</p>
-                <ul className="mb-0 ps-3">
-                  {insights?.strengths?.slice(0, 3).map((item, index) => (
-                    <li key={index}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-            }
-          />
-        </div>
-      </div>
+  return <main className="container-fluid product-page px-3 px-lg-4 mt-4 pb-5">
+    <div className="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+      <div className="page-heading mb-0"><div className="small text-uppercase fw-semibold text-primary mb-2" style={{letterSpacing:".1em"}}>Data-backed insight</div><h1 className="h2 mb-1">AI study analysis</h1><p>Investigate your study patterns using your actual saved records.</p></div>
+      <button className="btn btn-primary" onClick={analyze} disabled={generating}><i className="bi bi-stars me-2" />{generating ? "Analyzing..." : "Analyze my study habits"}</button>
     </div>
-  );
+    {error && <div className="alert alert-danger">{error}</div>}
+    {!analysis ? <Card title="No analysis yet" content={<div><p className="text-secondary">Record study sessions and add subjects before requesting an analysis.</p><button className="btn btn-primary" onClick={analyze} disabled={generating}>Analyze My Study Habits</button></div>} /> : <div className="row g-4">
+      <div className="col-lg-8 d-flex flex-column gap-4">
+        <Card title="Latest analysis" content={<div>
+          <div className="d-flex justify-content-between flex-wrap gap-2 mb-3"><span className="badge bg-light text-dark border">{analysis.provider === "gemini" ? "Gemini generated" : "Deterministic fallback"}</span><small className="text-secondary">Generated {new Date(analysis.createdAt).toLocaleString()}</small></div>
+          <p>{analysis.summary}</p>
+          {analysis.dataPeriodStart && <p className="small text-secondary mb-0">Data period: {new Date(analysis.dataPeriodStart).toLocaleDateString()} – {new Date(analysis.dataPeriodEnd).toLocaleDateString()} · {analysis.recordCounts?.sessions || 0} sessions reviewed</p>}
+        </div>} />
+        <Card title="Findings" content={analysis.insights?.length ? <div className="d-flex flex-column gap-3">{analysis.insights.map((item,index)=><div key={index} className="border-start border-3 border-primary ps-3"><strong>{item.title}</strong><div>{item.explanation}</div>{item.evidence?.length>0&&<div className="small text-secondary">Evidence: {item.evidence.join ? item.evidence.join(", ") : JSON.stringify(item.evidence)}</div>}</div>)}</div> : <p className="text-secondary mb-0">No subject-level finding could be verified from the available records.</p>} />
+        <Card title="Action recommendations" content={analysis.recommendations?.length ? <ul className="mb-0">{analysis.recommendations.map((item,index)=><li key={index}>{item}</li>)}</ul> : <p className="text-secondary mb-0">No recommendation is available until more data is recorded.</p>} />
+      </div>
+      <div className="col-lg-4 d-flex flex-column gap-4">
+        <Card title="Evidence used" content={<div>{analysis.evidence?.length ? analysis.evidence.map((item,index)=><div key={index} className="border rounded p-3 mb-2 bg-light">
+          {Object.entries(item || {}).map(([label,value]) => {
+            const formattedLabel = label.replace(/([A-Z])/g, " $1").replace(/^./, (character) => character.toUpperCase());
+            const formattedValue = typeof value === "object" && value !== null ? JSON.stringify(value) : String(value);
+            return <div key={label} className="d-flex justify-content-between gap-3 py-1 border-bottom"><span className="text-secondary">{formattedLabel}</span><strong className="text-end">{formattedValue}</strong></div>;
+          })}
+        </div>) : <p className="text-secondary mb-0">No evidence metadata was saved.</p>}</div>} />
+        <Card title="Warnings" content={analysis.warnings?.length ? <ul className="mb-0">{analysis.warnings.map((item,index)=><li key={index}><strong>{item.title}</strong>: {item.action}</li>)}</ul> : <p className="text-secondary mb-0">No missed or consistency warnings are visible in the analysis period.</p>} />
+        <Card title="Saved history" content={history.length ? <div className="d-flex flex-column gap-2">{history.slice(0,10).map(item=><button key={item._id} className="btn btn-sm btn-outline-secondary text-start" onClick={()=>setAnalysis(item)}><strong>{new Date(item.createdAt).toLocaleString()}</strong><br/><small>{item.provider} · {item.recordCounts?.sessions || 0} sessions</small></button>)}</div> : <p className="text-secondary mb-0">No saved analyses.</p>} />
+      </div>
+    </div>}
+  </main>;
 }

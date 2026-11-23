@@ -31,9 +31,12 @@ export default function TopNavbar() {
   };
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-dark bg-dark border-bottom fixed-top">
+    <nav className="navbar navbar-expand-lg navbar-product fixed-top">
       <div className="container">
-        <h1 className="navbar-brand">Smart Study & Productivity Analyzer</h1>
+        <Link to={isAuthPage ? "/" : "/dashboard"} className="navbar-brand d-flex align-items-center gap-2 text-decoration-none text-dark">
+          <span className="rounded-3 d-inline-flex align-items-center justify-content-center text-white" style={{ width: 34, height: 34, background: "#235f91" }}><i className="bi bi-journal-check" /></span>
+          <span>Smart Study <span className="text-secondary fw-normal">& Productivity</span></span>
+        </Link>
 
         <div ref={dropdownRef} style={{ position: "relative" }}>
           {location.pathname === "/" && (
@@ -48,21 +51,24 @@ export default function TopNavbar() {
           )}
 
           {!isAuthPage && (
-            <div
-              className="d-flex align-items-center gap-2 text-white"
-              style={{ cursor: "pointer" }}
+            <button
+              type="button"
+              className="d-flex align-items-center gap-2 text-dark"
+              style={{ cursor: "pointer", border: 0, background: "transparent" }}
               onClick={() => setOpen(!open)}
+              aria-expanded={open}
+              aria-label="Open account menu"
             >
               <div
-                className="rounded-circle bg-primary d-flex justify-content-center align-items-center"
-                style={{ width: "35px", height: "35px" }}
+                className="rounded-circle d-flex justify-content-center align-items-center text-white"
+                style={{ width: "35px", height: "35px", background: "#235f91" }}
               >
                 {username[0]?.toUpperCase() || "U"}
               </div>
 
               <span>{username}</span>
               <span><i className="bi bi-chevron-down"></i></span>
-            </div>
+            </button>
           )}
 
           <div

@@ -1,20 +1,22 @@
 export default function Card({ title, content, width, height, icon }) {
   return (
     <div 
-      className="card shadow-sm p-4 rounded-4 border-0 h-100"
+      className="product-card card p-4 h-100"
       style={{ 
         width: width, 
         height: height,
-        background: "linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%)",
-        transition: "transform 0.3s ease, box-shadow 0.3s ease"
+        background: "#ffffff",
+        border: "1px solid #d6d9de",
+        boxShadow: "0 2px 8px rgba(31, 41, 55, 0.06)",
+        transition: "transform 0.2s ease, box-shadow 0.2s ease"
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = "translateY(-4px)";
-        e.currentTarget.style.boxShadow = "0 12px 24px rgba(0, 0, 0, 0.1)";
+        e.currentTarget.style.boxShadow = "0 8px 20px rgba(31, 41, 55, 0.12)";
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = "translateY(0)";
-        e.currentTarget.style.boxShadow = "";
+        e.currentTarget.style.boxShadow = "0 2px 8px rgba(31, 41, 55, 0.06)";
       }}
     >
       <div className="d-flex align-items-center gap-2 mb-3">

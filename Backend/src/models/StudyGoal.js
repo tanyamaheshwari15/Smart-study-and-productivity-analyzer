@@ -8,6 +8,11 @@ const studyGoalSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    subjectId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Subject",
+      index: true,
+    },
     title: {
       type: String,
       required: true,

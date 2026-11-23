@@ -106,7 +106,8 @@ export const getCurrentUser = async (req, res) => {
         username: user.username, 
         email: user.email,
         studyHours: user.studyHours,
-        streak: user.streak
+        streak: user.streak,
+        preferences: user.preferences
       },
     });
   } catch (error) {

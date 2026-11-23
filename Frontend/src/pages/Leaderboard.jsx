@@ -1,75 +1,45 @@
-﻿import { useEffect, useState } from "react";
-import Card from "../components/Card";
-import { api, getStoredUser } from "../services/api";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { api } from "../services/api";
+import { formatMinutes } from "../utils/duration";
 
 export default function Leaderboard() {
-  const [leaderboard, setLeaderboard] = useState([]);
+  const [profile, setProfile] = useState(null);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const response = await api.get("/dashboard");
-        setLeaderboard(response.data.data.leaderboard || []);
-      } catch (err) {
-        setLeaderboard([]);
-      }
-    };
-
-    load();
+    api.get("/dashboard")
+      .then((response) => setProfile(response.data.data.profile))
+      .catch((requestError) => setError(requestError.response?.data?.message || "Unable to load your study summary."));
   }, []);
 
-  const getRankMedal = (rank) => rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : "📊";
-
   return (
-    <div className="container d-flex flex-column gap-4 mt-4" style={{ position: "relative", top: 59, paddingBottom: "40px" }}>
-      <div className="mb-2">
-        <h2 style={{ fontSize: "2rem", fontWeight: 700, color: "#2c3e50", marginBottom: "0.5rem" }}>Leaderboard</h2>
-        <p style={{ color: "#7f8c8d", marginBottom: 0 }}>See how you stack up against the community</p>
-      </div>
-      <div className="d-flex gap-4 flex-wrap justify-content-center">
-        <Card width="100%" height="auto" icon="🏅" title="Monthly Rankings" content={
-          <div className="d-flex flex-column gap-2">
-            {leaderboard.map((item) => (
-              <div key={item.rank} style={{ 
-                display: "flex", 
-                alignItems: "center", 
-                gap: "12px", 
-                padding: "12px", 
-                background: item.rank === 1 ? "#fffacd" : "#f8f9fa",
-                borderRadius: "8px",
-                borderLeft: `4px solid ${["#ffd700", "#c0c0c0", "#cd7f32", "#95a5a6"][item.rank - 1]}`
-              }}>
-                <span style={{ fontSize: "1.4rem" }}>{getRankMedal(item.rank)}</span>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600, color: "#2c3e50" }}>#{item.rank} {item.name}</div>
-                  <div style={{ fontSize: "0.85rem", color: "#7f8c8d" }}>Score: {item.score} | Streak: {item.streak}d | Hours: {item.hours}h</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        } />
-
-        <Card width="48%" height="auto" icon="🎖️" title="Your Metrics" content={
-          <div className="d-flex flex-column gap-2">
-            {leaderboard.length ? [
-              `🔥 ${leaderboard[0].streak} active study days`,
-              `📚 ${leaderboard[0].hours} study hours`,
-              `🎯 ${leaderboard[0].score}% average focus`,
-            ].map((badge, idx) => (
-              <div key={idx} style={{ padding: "8px 12px", background: "#e3f2fd", borderRadius: "6px", fontWeight: 500, color: "#1976d2" }}>{badge}</div>
-            )) : <p className="mb-0">Log study sessions to unlock personal metrics.</p>}
-          </div>
-        } />
-
-        <Card width="48%" height="auto" icon="📈" title="Account Summary" content={
-          <div className="d-flex flex-column gap-2">
-            {leaderboard[0] ? <>
-              <div><span style={{ color: "#7f8c8d" }}>Rank</span><br/><strong style={{ fontSize: "1.3rem", color: "#2c3e50" }}>#{leaderboard[0].rank}</strong></div>
-              <div><span style={{ color: "#7f8c8d" }}>Focus Score</span><br/><strong style={{ fontSize: "1.3rem", color: "#3498db" }}>{leaderboard[0].score}%</strong></div>
-            </> : <p className="mb-0">No account ranking data yet.</p>}
-          </div>
-        } />
-      </div>
-    </div>
+    <main className="container-fluid product-page px-3 px-lg-4 mt-4 pb-5">
+      <header className="page-heading"><div className="small text-uppercase fw-semibold text-primary mb-2" style={{ letterSpacing: ".1em" }}>Your progress</div><h1 className="h2 mb-1">Study summary</h1><p>A personal snapshot of your logged study activity. No community ranking is shown because this app does not yet have a verified shared leaderboard.</p></header>
+      {error && <div className="alert alert-danger" role="alert">{error}</div>}
+      {!profile ? !error && <div className="product-surface p-4 placeholder-glow"><span className="placeholder col-5 rounded" /></div> : <div className="row g-4">
+        <div className="col-xl-4">
+          <section className="rounded-4 p-4 p-lg-5 text-white h-100" style={{ background: "linear-gradient(145deg,#173b68,#3182a5)" }}>
+            <div className="small text-uppercase fw-semibold mb-3" style={{ letterSpacing: ".1em", color: "#b9d1e8" }}>Consistency over comparison</div>
+            <div className="display-4 fw-bold mb-1">{profile.streak || 0}</div><div className="mb-4" style={{ color: "#d8e6f2" }}>consecutive study days</div>
+            <p className="small mb-0" style={{ color: "#d8e6f2" }}>A streak counts consecutive days with at least one saved study session.</p>
+          </section>
+        </div>
+        <div className="col-xl-8">
+          <section className="product-surface p-4 p-lg-5 h-100">
+            <h2 className="h6 fw-bold mb-4">Your recorded milestones</h2>
+            <div className="row g-3">
+              {[
+                ["Study time logged", formatMinutes(Math.round((profile.studyHours || 0) * 60)), "bi-hourglass-split", "From completed sessions saved to your account."],
+                ["Longest streak", `${profile.longestStreak || 0} days`, "bi-fire", "Longest consecutive run in your saved session history."],
+                ["Average focus", profile.focusScore ? `${profile.focusScore}%` : "No data", "bi-bullseye", "Average self-reported focus score across sessions."],
+                ["Goals completed", profile.goalsCompleted || 0, "bi-check2-circle", "Goals marked complete in your account."],
+              ].map(([label, value, icon, note]) => <div key={label} className="col-sm-6"><div className="rounded-4 p-3 h-100" style={{ background: "#f6f8fb" }}><div className="d-flex align-items-center gap-2 text-secondary small mb-2"><i className={`bi ${icon} text-primary`} />{label}</div><div className="fs-4 fw-bold mb-1">{value}</div><div className="small text-secondary">{note}</div></div></div>)}
+            </div>
+            <div className="d-flex flex-wrap gap-2 mt-4"><Link to="/activity-log" className="btn btn-outline-secondary">Review sessions</Link><Link to="/goal" className="btn btn-primary">View study goals</Link></div>
+          </section>
+        </div>
+      </div>}
+    </main>
   );
 }

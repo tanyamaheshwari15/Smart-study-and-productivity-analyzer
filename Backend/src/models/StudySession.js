@@ -13,6 +13,11 @@ const studySessionSchema = new mongoose.Schema(
       trim: true,
       default: "General study",
     },
+    subjectId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Subject",
+      index: true,
+    },
     durationMinutes: {
       type: Number,
       default: 0,

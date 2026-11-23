@@ -30,6 +30,14 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    preferences: {
+      theme: { type: String, enum: ["light", "dark"], default: "light" },
+      notifications: { type: Boolean, default: true },
+      dailyGoalMinutes: { type: Number, min: 0, default: 120 },
+      preferredTime: { type: String, enum: ["Morning", "Afternoon", "Evening", "Night"], default: "Evening" },
+      availableHours: { type: Number, min: 0, max: 16, default: 2 },
+      breakMinutes: { type: Number, min: 5, max: 60, default: 10 },
+    },
     createdAt: {
       type: Date,
       default: Date.now,

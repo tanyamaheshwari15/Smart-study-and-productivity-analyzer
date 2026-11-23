@@ -1,107 +1,108 @@
-﻿import { useEffect, useState } from "react";
-import Card from "../components/Card";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { api } from "../services/api";
+import { formatMinutes } from "../utils/duration";
 
 export default function Goals() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const response = await api.get("/dashboard");
-        setData(response.data.data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    load();
-  }, []);
-
-  if (loading || !data) {
-    return <div className="container mt-4" style={{ position: "relative", top: 59 }}><h2>Goals & Performance</h2><p>Loading goals...</p></div>;
-  }
-
-  const activeGoals = data.goals || [];
-  const completion = activeGoals.length ? Math.round((activeGoals.filter((g) => g.status === "completed").length / activeGoals.length) * 100) : 0;
+  const load = async () => {
+    try {
+      const response = await api.get("/dashboard");
+      setData(response.data.data);
+      setError("");
+    } catch (requestError) { setError(requestError.response?.data?.message || "Unable to load your goals."); }
+    finally { setLoading(false); }
+  };
+  useEffect(() => { load(); }, []);
 
   const createGoal = async (event) => {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    await api.post("/data/goals", { title: form.get("title"), description: form.get("description"), targetHours: Number(form.get("targetHours")) });
-    const response = await api.get("/dashboard");
-    setData(response.data.data);
-    event.currentTarget.reset();
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
+    setSaving(true); setError("");
+    try {
+      await api.post("/data/goals", { title: form.get("title"), description: form.get("description"), targetHours: Number(form.get("targetHours")) });
+      formElement.reset();
+      await load();
+    } catch (requestError) { setError(requestError.response?.data?.message || "Unable to create goal."); }
+    finally { setSaving(false); }
   };
 
   const updateGoal = async (goal, status) => {
-    await api.put(`/data/goals/${goal.id}`, { status, completedHours: status === "completed" ? goal.targetHours : goal.completedHours });
-    const response = await api.get("/dashboard");
-    setData(response.data.data);
+    setError("");
+    try {
+      await api.put(`/data/goals/${goal.id}`, { status, completedHours: status === "completed" ? goal.targetHours : goal.completedHours });
+      await load();
+    } catch (requestError) { setError(requestError.response?.data?.message || "Unable to update goal."); }
   };
 
   const deleteGoal = async (goal) => {
-    await api.delete(`/data/goals/${goal.id}`);
-    const response = await api.get("/dashboard");
-    setData(response.data.data);
+    if (!window.confirm(`Delete the goal “${goal.title}”?`)) return;
+    setError("");
+    try { await api.delete(`/data/goals/${goal.id}`); await load(); }
+    catch (requestError) { setError(requestError.response?.data?.message || "Unable to delete goal."); }
   };
 
+  const goals = data?.goals || [];
+  const active = goals.filter((goal) => goal.status === "active").length;
+  const completed = goals.filter((goal) => goal.status === "completed").length;
+  const progressMinutes = goals.reduce((sum, goal) => sum + Math.round((goal.completedHours || 0) * 60), 0);
+
   return (
-    <div className="container d-flex flex-column gap-4 mt-4" style={{ position: "relative", top: 59, paddingBottom: "40px" }}>
-      <div className="mb-2">
-        <h2 style={{ fontSize: "2rem", fontWeight: 700, color: "#2c3e50", marginBottom: "0.5rem" }}>Goals & Performance</h2>
-        <p style={{ color: "#7f8c8d", marginBottom: 0 }}>Track your study goals and academic progress</p>
-      </div>
+    <main className="container-fluid product-page px-3 px-lg-4 mt-4 pb-5">
+      <header className="page-heading d-flex justify-content-between align-items-end flex-wrap gap-3">
+        <div><div className="small text-uppercase fw-semibold text-primary mb-2" style={{ letterSpacing: ".1em" }}>Stay intentional</div><h1 className="h2 mb-1">Study goals</h1><p>Set a target, track recorded progress, and celebrate the work you complete.</p></div>
+        <Link to="/planner" className="btn btn-outline-primary"><i className="bi bi-calendar-plus me-2" />Plan a study week</Link>
+      </header>
+      {error && <div className="alert alert-danger d-flex justify-content-between align-items-center" role="alert">{error}<button className="btn btn-sm btn-outline-danger" onClick={load}>Retry</button></div>}
 
-      <div className="d-flex gap-4 justify-content-center flex-wrap">
-        <Card width="380px" height="120px" icon="🎯" title="Active Goals" content={<div style={{ fontSize: "2.5rem", fontWeight: 700, color: "#3498db" }}>{activeGoals.length}</div>} />
-        <Card width="380px" height="120px" icon="✅" title="Completion Ratio" content={<div style={{ fontSize: "2.5rem", fontWeight: 700, color: "#27ae60" }}>{completion}%</div>} />
-        <Card width="380px" height="120px" icon="🔥" title="Longest Streak" content={<div style={{ fontSize: "2.5rem", fontWeight: 700, color: "#e74c3c" }}>{data.profile?.streak || 0} <span style={{ fontSize: "0.8rem" }}>days</span></div>} />
-      </div>
+      <section className="row g-3 mb-4">
+        <div className="col-6 col-xl-3"><div className="product-surface p-3 p-lg-4"><div className="small text-secondary mb-1">Active goals</div><strong className="fs-3">{active}</strong></div></div>
+        <div className="col-6 col-xl-3"><div className="product-surface p-3 p-lg-4"><div className="small text-secondary mb-1">Completed goals</div><strong className="fs-3">{completed}</strong></div></div>
+        <div className="col-12 col-xl-6"><div className="product-surface p-3 p-lg-4 d-flex align-items-center justify-content-between gap-3"><div><div className="small text-secondary mb-1">Progress credited to goals</div><strong className="fs-4">{formatMinutes(progressMinutes)}</strong></div><i className="bi bi-bullseye fs-2 text-primary" /></div></div>
+      </section>
 
-      <div className="d-flex gap-4 justify-content-center flex-wrap">
-        <Card width="500px" height="160px" icon="🎓" title="Current Focus Topic" content={<p style={{ fontSize: "1.1rem", fontWeight: 500, color: "#2c3e50", marginBottom: 0 }}>{data.profile?.bestTopic || "Arrays"}</p>} />
-        <Card width="500px" height="160px" icon="🏆" title="Goals Completed" content={<p style={{ fontSize: "1.1rem", fontWeight: 500, color: "#2c3e50", marginBottom: 0 }}>{data.profile?.goalsCompleted || 0} goals finished</p>} />
-      </div>
-
-      <div className="d-flex justify-content-center">
-        <Card width="100%" height="auto" icon="📋" title="Active Study Goals" content={
-          <div>
-            <form className="row g-2 mb-3" onSubmit={createGoal}>
-              <div className="col-md-5"><input className="form-control" name="title" placeholder="Goal title" required /></div>
-              <div className="col-md-3"><input className="form-control" name="targetHours" type="number" min="1" placeholder="Target hours" required /></div>
-              <div className="col-md-4"><input className="form-control" name="description" placeholder="Description" /></div>
-              <div className="col-12"><button className="btn btn-primary btn-sm" type="submit">Create Goal</button></div>
+      <div className="row g-4 align-items-start">
+        <section className="col-xl-4">
+          <div className="product-surface p-4">
+            <div className="d-flex align-items-center gap-3 mb-3"><span className="rounded-3 d-inline-flex align-items-center justify-content-center" style={{ width: 42, height: 42, background: "#eef5fb", color: "#235f91" }}><i className="bi bi-plus-lg" /></span><div><h2 className="h6 fw-bold mb-1">Create a goal</h2><p className="small text-secondary mb-0">Make a specific, measurable target.</p></div></div>
+            <form className="d-flex flex-column gap-3" onSubmit={createGoal}>
+              <div><label className="form-label fw-semibold" htmlFor="goal-title">Goal name</label><input id="goal-title" className="form-control" name="title" placeholder="e.g. Review calculus weekly" maxLength="120" required /></div>
+              <div><label className="form-label fw-semibold" htmlFor="goal-hours">Target study hours</label><input id="goal-hours" className="form-control" name="targetHours" type="number" min="0.25" max="1000" step="0.25" placeholder="e.g. 5" required /></div>
+              <div><label className="form-label fw-semibold" htmlFor="goal-description">Description <span className="text-secondary fw-normal">(optional)</span></label><textarea id="goal-description" className="form-control" name="description" rows="3" maxLength="500" placeholder="What will reaching this goal help you do?" /></div>
+              <button className="btn btn-primary" type="submit" disabled={saving}>{saving ? "Saving goal..." : "Create goal"}</button>
             </form>
-            {activeGoals.length === 0 ? (
-              <p style={{ color: "#95a5a6", fontStyle: "italic" }}>No active goals yet. Create one to start!</p>
-            ) : (
-              <div className="d-flex flex-column gap-3">
-                {activeGoals.map((goal) => (
-                  <div key={goal.id || goal.title} style={{ borderLeft: "4px solid #3498db", paddingLeft: "12px", paddingBottom: "8px" }}>
-                    <div style={{ fontWeight: 600, color: "#2c3e50", marginBottom: "4px" }}>{goal.title}</div>
-                    <div style={{ fontSize: "0.9rem", color: "#7f8c8d" }}>
-                      <span style={{ display: "inline-block", marginRight: "16px" }}>Progress: {goal.completedHours}/{goal.targetHours} hrs</span>
-                      <span className="badge" style={{ background: goal.status === "completed" ? "#27ae60" : "#3498db" }}>{goal.status}</span>
-                    </div>
-                    <div style={{ background: "#ecf0f1", height: "6px", borderRadius: "3px", marginTop: "6px" }}>
-                      <div style={{ background: goal.status === "completed" ? "#27ae60" : "#3498db", height: "100%", borderRadius: "3px", width: `${goal.targetHours ? Math.min(100, Math.round((goal.completedHours / goal.targetHours) * 100)) : 0}%`, transition: "width 0.3s ease" }}></div>
-                    </div>
-                    <div className="d-flex gap-2 mt-2">
-                      <button className="btn btn-sm btn-outline-success" onClick={() => updateGoal(goal, "completed")}>Complete</button>
-                      <button className="btn btn-sm btn-outline-secondary" onClick={() => updateGoal(goal, "paused")}>Pause</button>
-                      <button className="btn btn-sm btn-outline-danger" onClick={() => deleteGoal(goal)}>Delete</button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
-        } />
+        </section>
+        <section className="col-xl-8">
+          <div className="product-surface p-4">
+            <div className="d-flex justify-content-between align-items-center gap-3 mb-3"><div><h2 className="h6 fw-bold mb-1">Your goals</h2><p className="small text-secondary mb-0">Progress is shown from the values saved for each goal.</p></div><span className="badge rounded-pill text-bg-light border">{goals.length} total</span></div>
+            {loading ? <div className="placeholder-glow"><span className="placeholder col-12 mb-3 rounded" /><span className="placeholder col-12 mb-3 rounded" /></div>
+              : goals.length ? <div className="d-flex flex-column gap-3">{goals.map((goal) => {
+                const progress = goal.targetHours > 0 ? Math.min(100, Math.round((goal.completedHours / goal.targetHours) * 100)) : 0;
+                return <article key={goal.id} className="border rounded-4 p-3 p-lg-4">
+                  <div className="d-flex justify-content-between align-items-start gap-3">
+                    <div className="min-w-0"><h3 className="h6 fw-bold mb-1">{goal.title}</h3>{goal.description && <p className="small text-secondary mb-2">{goal.description}</p>}</div>
+                    <span className={`badge rounded-pill ${goal.status === "completed" ? "text-bg-success" : goal.status === "paused" ? "text-bg-secondary" : "text-bg-primary"}`}>{goal.status}</span>
+                  </div>
+                  <div className="d-flex justify-content-between small mb-2"><span className="text-secondary">{formatMinutes(Math.round((goal.completedHours || 0) * 60))} of {formatMinutes(Math.round((goal.targetHours || 0) * 60))}</span><strong>{progress}%</strong></div>
+                  <div className="progress mb-3" style={{ height: 8 }}><div className={`progress-bar ${goal.status === "completed" ? "bg-success" : ""}`} role="progressbar" style={{ width: `${progress}%` }} aria-valuenow={progress} aria-valuemin="0" aria-valuemax="100" /></div>
+                  <div className="d-flex flex-wrap gap-2">
+                    {goal.status !== "completed" && <button className="btn btn-sm btn-outline-success" onClick={() => updateGoal(goal, "completed")}><i className="bi bi-check2 me-1" />Mark complete</button>}
+                    {goal.status === "active" && <button className="btn btn-sm btn-outline-secondary" onClick={() => updateGoal(goal, "paused")}>Pause</button>}
+                    {goal.status === "paused" && <button className="btn btn-sm btn-outline-primary" onClick={() => updateGoal(goal, "active")}>Resume</button>}
+                    <button className="btn btn-sm btn-outline-danger ms-sm-auto" onClick={() => deleteGoal(goal)}>Delete</button>
+                  </div>
+                </article>;
+              })}</div>
+              : <div className="text-center p-5"><div className="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style={{ width: 54, height: 54, color: "#235f91", background: "#eef5fb" }}><i className="bi bi-bullseye fs-5" /></div><h3 className="h6 fw-bold">Your next goal starts here</h3><p className="small text-secondary mb-0">Use the form to set a meaningful study target.</p></div>}
+          </div>
+        </section>
       </div>
-    </div>
+    </main>
   );
 }
